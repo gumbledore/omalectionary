@@ -6,8 +6,10 @@
 # ~/.config/omarchy/plugins/gumbledore.reminders/bin/rem). Meant to be bound
 # to a Hyprland keybinding as well as the bar widget's click handler.
 #
-# open-logos <ref>: reserved for ticket 06 (jumping straight to a reference
-# via Logos); not implemented yet.
+# open-logos <url>: opens a ref.ly URL (built by the overlay's Browse.js)
+# in the user's default handler via xdg-open, detached so this script exits
+# immediately -- the overlay shells out to this rather than calling
+# xdg-open directly so the URL is validated in one place.
 set -euo pipefail
 
 PLUGIN_ID="gumbledore.omalectionary"
@@ -15,13 +17,28 @@ PLUGIN_ID="gumbledore.omalectionary"
 usage() {
   cat <<EOF
 Usage:
-  omalectionary show-overlay   toggle the reading overlay
+  omalectionary show-overlay        toggle the reading overlay
+  omalectionary open-logos <url>    open a ref.ly URL in Logos (or its xdg handler)
 EOF
 }
 
 case "${1:-}" in
 show-overlay)
   omarchy-shell -q "$PLUGIN_ID" toggle
+  ;;
+open-logos)
+  url="${2:-}"
+  case "$url" in
+  https://ref.ly/*)
+    rest="${url#https://ref.ly/}"
+    [[ "$rest" =~ ^[A-Za-z0-9.-]+$ ]] || { echo "omalectionary: invalid ref.ly URL" >&2; exit 1; }
+    ;;
+  *)
+    echo "omalectionary: refusing non ref.ly URL" >&2
+    exit 1
+    ;;
+  esac
+  setsid xdg-open "$url" >/dev/null 2>&1 &
   ;;
 -h | --help | help | "")
   usage
