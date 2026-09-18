@@ -42,7 +42,7 @@ check("2026-01-01", { key: "holy-name", short: "Holy Name", season: "Christmas",
 check("2026-01-02", { key: "christmas-1", season: "Christmas" }) // reverts after the spike
 check("2026-01-04", { key: "christmas-2", short: "Christmas 2", season: "Christmas" })
 check("2026-01-06", { key: "epiphany", short: "Epiphany", season: "Season after Epiphany", color: "white" })
-check("2026-01-11", { key: "baptism", short: "Baptism of the Lord" })
+check("2026-01-11", { key: "baptism", short: "Baptism" })
 check("2026-01-18", { key: "epiphany-2", short: "Epiphany 2", season: "Season after Epiphany", color: "green" })
 check("2026-02-08", { key: "epiphany-5", short: "Epiphany 5" })
 check("2026-02-15", { key: "transfiguration", short: "Transfiguration", season: "Season after Epiphany", color: "white" })
@@ -101,5 +101,23 @@ check("2023-01-02", { key: "christmas", season: "Christmas" })
 
 // --- Accepts a Date object too (local y/m/d, matching new Date(y, m-1, d)) ---
 assert.equal(C.dayFor(new Date(2026, 8, 20)).key, "proper-20")
+
+// --- Every `short` fits the bar: walk a full church year day by day (a
+// leap year, so Feb 29 is covered too) and check every distinct day key's
+// `short` is non-empty and <=16 chars -- the bar widget's whole label.
+const MAX_SHORT = 16
+{
+  const seen = {}
+  let d = new Date(2024, 0, 1)
+  for (let i = 0; i < 366; i++) {
+    const r = C.dayFor(d)
+    if (!seen[r.key]) {
+      seen[r.key] = true
+      assert.ok(r.short && r.short.length > 0, `${r.key}: short is empty`)
+      assert.ok(r.short.length <= MAX_SHORT, `${r.key}: short "${r.short}" is ${r.short.length} chars, want <=${MAX_SHORT}`)
+    }
+    d.setDate(d.getDate() + 1)
+  }
+}
 
 console.log("calendar ok")

@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "id": "gumbledore.omalectionary",
   "name": "Omalectionary",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "author": "Kevin Goff",
   "license": "MIT",
-  "description": "Today's liturgical day on the bar, tinted with the season color.",
+  "description": "Today's liturgical day on the bar, tinted with the season color, with an overlay for the day's RCL readings in BSB / Greek / Hebrew / interlinear.",
   "kinds": [
     "bar-widget",
     "overlay"

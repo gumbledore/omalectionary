@@ -1,0 +1,43 @@
+Westminster Leningrad Codex (WLC) -- Public Domain
+=====================================================
+
+Used in data/wlc.json, built by build/convert_wlc.py from
+https://github.com/openscriptures/morphhb (wlc/*.xml).
+
+The Westminster Leningrad Codex text itself is public domain. Only the WLC
+consonantal/pointed Hebrew text (the <w> word content of each <verse>) is
+used by this plugin; the morphhb project's morphological tagging, parsing
+data, and VerseMap.xml (used at build time only, to normalize WLC
+versification to KJV/English numbering -- see convert_wlc.py's header
+comment) are licensed CC BY 4.0 by the Open Scriptures Hebrew Bible project
+and are not shipped in data/wlc.json.
+
+Source notice, quoted verbatim from
+https://github.com/openscriptures/morphhb (About.md / LICENSE.md):
+
+-----------------------------------------------------------------------------
+
+# Open Scriptures Hebrew Bible
+
+This work is based on The Westminster Leningrad Codex, which is in the
+public domain.
+
+# License
+
+## Creative Commons Attribution 4.0 International (CC BY 4.0)
+
+### Attribution
+
+You must attribute the work as follows: "Original work of the Open
+Scriptures Hebrew Bible available at
+https://github.com/openscriptures/morphhb". You may do so in any reasonable
+manner, but not in any way that suggests the licensor endorses you or your
+use.
+
+-----------------------------------------------------------------------------
+
+Since this plugin uses only the public-domain WLC text (no morphology,
+parsing, or the VerseMap table at runtime), no attribution is legally
+required for data/wlc.json itself -- but the attribution above is given
+anyway, since VerseMap.xml's versification table was relied on at build
+time.

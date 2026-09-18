@@ -126,7 +126,7 @@ function buildChurchYear(sy) {
   var transfiguration = addDays(ashWednesday, -3)
 
   var baptism = sundayStrictlyAfter(epiphany)
-  reigns.push({ date: baptism, key: "baptism", name: "Baptism of the Lord", short: "Baptism of the Lord", season: "Season after Epiphany", color: "white" })
+  reigns.push({ date: baptism, key: "baptism", name: "Baptism of the Lord", short: "Baptism", season: "Season after Epiphany", color: "white" })
 
   var epiN = addDays(baptism, 7)
   var n = 2
