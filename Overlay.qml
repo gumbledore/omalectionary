@@ -11,6 +11,7 @@ import "data/daily.js" as DailyData
 import "Lectionary.js" as Lectionary
 import "Config.js" as Config
 import "Text.js" as ReadingText
+import "Browse.js" as Browse
 
 // Full-height reading overlay: header (date + liturgical day), a tab row
 // naming each appointed reading, and one reading at a time in a centered
@@ -62,6 +63,11 @@ Item {
   property var sblgnt: null
   property var wlc: null
   property int activeIndex: 0
+  // Days from today the overlay is browsing, clamped to +/-7 (Browse.js).
+  // The bar widget never reads this -- it always calls Lectionary.dayFor
+  // with plain `new Date()` -- so only the overlay's own view is affected.
+  // Resets to 0 whenever the overlay closes (see dismiss()/close()).
+  property int dayOffset: 0
 
   // english -> original -> interlinear -> english; persisted across
   // readings, days, and shell restarts via stateFile below.
@@ -77,7 +83,7 @@ Item {
 
   // Single string so a later ticket (e.g. day browsing/Logos) can append
   // its own hints without touching the footer's layout.
-  property string keyHints: "Tab view · ←→ readings · Esc close"
+  property string keyHints: "Tab view · ←→ readings · Esc close · [ ] days · t today · o Logos"
 
   readonly property var activeReading: (root.today.readings.length > activeIndex) ? root.today.readings[activeIndex] : null
   readonly property var activeRangeArg: root.activeReading ? { book: root.activeReading.book, ranges: root.activeReading.ranges } : null
@@ -105,7 +111,7 @@ Item {
     // 4th arg (the RCL Daily Lectionary table) is ticket 04's addition to
     // Lectionary.configure -- required on every weekday, not just Sundays.
     Lectionary.configure(Calendar, Reference, SundaysData.SUNDAYS, DailyData.DAILY)
-    root.today = Lectionary.dayFor(new Date(), root.config)
+    root.today = Lectionary.dayFor(Browse.offsetDate(new Date(), root.dayOffset), root.config)
     if (root.activeIndex >= root.today.readings.length) root.activeIndex = 0
   }
 
@@ -115,10 +121,11 @@ Item {
     Qt.callLater(function () { keyCatcher.forceActiveFocus() })
   }
 
-  function close() { root.opened = false }
+  function close() { root.opened = false; root.dayOffset = 0 }
 
   function dismiss() {
     root.opened = false
+    root.dayOffset = 0
     if (root.shell && typeof root.shell.hide === "function")
       root.shell.hide((root.manifest && root.manifest.id) || "gumbledore.omalectionary")
   }
@@ -129,6 +136,26 @@ Item {
     if (index < 0 || index >= root.today.readings.length) return
     root.activeIndex = index
     readingFlick.contentY = 0
+  }
+
+  // ] / [ step the browsed day forward/back, clamped to +/-7; t returns to
+  // today. All three re-resolve today/readings immediately via refresh().
+  function browseDay(delta) {
+    root.dayOffset = Browse.clampOffset(root.dayOffset + delta)
+    root.refresh()
+  }
+
+  function browseToday() {
+    root.dayOffset = 0
+    root.refresh()
+  }
+
+  // Opens the active reading's first range in Logos (or the user's xdg
+  // handler for ref.ly) via the plugin's own shell script, which validates
+  // the URL before shelling out to xdg-open.
+  function openInLogos() {
+    if (!root.activeReading) return
+    Quickshell.execDetached([root.pluginDir + "/bin/omalectionary", "open-logos", Browse.logosUrl(root.activeReading)])
   }
 
   Component.onCompleted: root.refresh()
@@ -293,6 +320,14 @@ Item {
           readingFlick.contentY = Math.max(0, readingFlick.contentY - readingFlick.height * 0.9)
         } else if (event.key === Qt.Key_PageDown) {
           readingFlick.contentY = Math.min(Math.max(0, readingFlick.contentHeight - readingFlick.height), readingFlick.contentY + readingFlick.height * 0.9)
+        } else if (event.key === Qt.Key_BracketRight) {
+          root.browseDay(1)
+        } else if (event.key === Qt.Key_BracketLeft) {
+          root.browseDay(-1)
+        } else if (event.key === Qt.Key_T && event.modifiers === Qt.NoModifier) {
+          root.browseToday()
+        } else if (event.key === Qt.Key_O && event.modifiers === Qt.NoModifier) {
+          root.openInLogos()
         } else {
           handled = false
         }
@@ -312,11 +347,26 @@ Item {
         width: parent.width
         spacing: Style.spacing.xxs
 
-        Text {
-          text: root.today.date ? Qt.formatDate(root.parseLocalDate(root.today.date), "dddd, MMMM d, yyyy") : ""
-          color: Color.foreground
-          font.family: Style.font.family
-          font.pixelSize: Style.font.heading
+        Row {
+          spacing: Style.spacing.sm
+          Text {
+            text: root.today.date ? Qt.formatDate(root.parseLocalDate(root.today.date), "dddd, MMMM d, yyyy") : ""
+            color: Color.foreground
+            font.family: Style.font.family
+            font.pixelSize: Style.font.heading
+          }
+          // Only shown while browsing away from today (dayOffset != 0); the
+          // liturgical-day line below already reflects the browsed date
+          // since it reads from root.today, which refresh() rebuilds via
+          // Browse.offsetDate.
+          Text {
+            visible: root.dayOffset !== 0
+            y: (parent.height - implicitHeight) / 2
+            text: root.dayOffset > 0 ? "+" + root.dayOffset + " days" : String(root.dayOffset) + " days"
+            color: Color.muted
+            font.family: Style.font.family
+            font.pixelSize: Style.font.body
+          }
         }
         Text {
           text: root.today.name + " · Year " + root.today.year + " · " + root.today.season
