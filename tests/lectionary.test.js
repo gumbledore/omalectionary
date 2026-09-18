@@ -4,6 +4,7 @@ const Reference = require("../Reference.js")
 const Lectionary = require("../Lectionary.js")
 const Config = require("../Config.js")
 const SUNDAYS = require("../data/sundays.js")
+const DAILY = require("../data/daily.js")
 const assert = require("node:assert/strict")
 
 // --- Reference parser: one case per form named in the ticket spec ---
@@ -107,8 +108,10 @@ check("2026-04-05", 2, "easter", "Acts 10:34-43 · Ps 118:1-2, 14-24 · Col 3:1-
 check("2025-12-25", 2, "christmas", "Isa 9:2-7 · Ps 96 · Titus 2:11-14 · Lk 2:1-14, (15-20)") // feast
 check("2026-09-20", 1, "proper-20", "Exod 16:2-15 · Ps 105:1-6, 37-45 · Phil 1:21-30 · Mt 20:1-16") // track 1
 check("2026-09-20", 2, "proper-20", "Jonah 3:10-4:11 · Ps 145:1-8 · Phil 1:21-30 · Mt 20:1-16")     // same Sunday, track 2 -> differs
-// Weekday: Friday before Proper 20 shows the coming Sunday's set (ticket's own example date)
-check("2026-09-18", 2, "proper-19", "Jonah 3:10-4:11 · Ps 145:1-8 · Phil 1:21-30 · Mt 20:1-16")
+// Weekday: Friday before Proper 20 used to show the coming Sunday's full
+// set (ticket 02/03 behavior); ticket 04 replaces that with the daily
+// lectionary's own Friday-before-Proper-20 reading — see the "daily"
+// fixtures section below.
 
 // Year B (church year begun Advent 2026)
 check("2026-11-29", 2, "advent-1", "Isa 64:1-9 · Ps 80:1-7, 17-19 · 1 Cor 1:3-9 · Mk 13:24-37")
@@ -144,4 +147,70 @@ assert.equal(Config.parseConfig('{"track":2}').track, 2, "valid track 2")
 assert.equal(Config.parseConfig('{"other":true}').track, 2, "missing track key")
 
 console.log("config ok")
+
+// --- Daily lectionary: every entry in data/daily.js parses ---
+
+function collectDailyRefs(entry) {
+  var refs = []
+  ;["psalm", "first", "second"].forEach(function (role) {
+    var v = entry[role]
+    if (v === undefined) return
+    if (v && typeof v === "object" && (v["1"] !== undefined || v["2"] !== undefined)) {
+      ["1", "2"].forEach(function (t) { if (v[t] !== undefined) refs.push(v[t]) })
+    } else {
+      refs.push(v)
+    }
+  })
+  return refs
+}
+
+var dailyRefCount = 0
+for (var dkey in DAILY) {
+  for (var dyr in DAILY[dkey]) {
+    for (var slot in DAILY[dkey][dyr]) {
+      collectDailyRefs(DAILY[dkey][dyr][slot]).forEach(function (r) {
+        var ref = typeof r === "string" ? r : r.ref
+        var parsed = Reference.parseRef(ref) // throws if the book/form is unknown
+        Reference.abbreviate(parsed.book)
+        dailyRefCount++
+      })
+    }
+  }
+}
+assert.ok(dailyRefCount > 500, "expected the daily table to carry well over 500 readings, got " + dailyRefCount)
+console.log("daily table parses (" + dailyRefCount + " readings) ok")
+
+// Sundays and Holy Week days still resolve via the Sunday table, not daily.
+assert.equal(Lectionary.dayFor("2026-09-20", { track: 2 }).source, "sunday", "Proper 20 Sunday itself")
+assert.equal(Lectionary.dayFor("2026-02-18", { track: 2 }).source, "sunday", "Ash Wednesday itself")
+assert.equal(Lectionary.dayFor("2026-04-05", { track: 2 }).source, "sunday", "Easter Day itself")
+assert.equal(Lectionary.dayFor("2026-04-02", { track: 2 }).source, "sunday", "Maundy Thursday itself")
+assert.equal(Lectionary.dayFor("2025-12-25", { track: 2 }).source, "sunday", "Christmas Day itself")
+assert.equal(Lectionary.dayFor("2026-01-01", { track: 2 }).source, "sunday", "Holy Name itself")
+
+// Weekdays resolve via the daily table.
+assert.equal(Lectionary.dayFor("2026-09-18", { track: 2 }).source, "daily", "Friday before Proper 20")
+
+console.log("daily source flags ok")
+
+// --- Fixture weekdays spread across seasons and all three year letters ---
+// (checked against the transcribed data/daily.js table; track split shown
+// where it diverges)
+
+check("2026-09-18", 1, "proper-19", "Ps 105:1-6, 37-45 · Exod 16:1-8 · Rom 15:1-6") // Fri before Proper 20 A, track 1
+check("2026-09-18", 2, "proper-19", "Ps 145:1-8 · Jonah 3:6-10 · Rom 15:1-6")       // same day, track 2 -> differs
+check("2026-09-22", 1, "proper-20", "Ps 27:1-6 · Exod 16:31-36 · Phil 1:12-18a")    // Tue after Proper 20 A, track 1
+check("2026-09-22", 2, "proper-20", "Ps 27:1-6 · Mic 1:1-9 · Phil 1:12-18a")        // same day, track 2 -> differs
+check("2025-12-04", 2, "advent-1", "Ps 72:1-7, 18-19 · Isa 9:8-17 · 2 Pet 3:1-10")  // Thu before Advent 2 A
+check("2026-02-20", 2, "ash-wednesday", "Ps 32 · Deut 8:11-20 · Heb 4:1-16")        // Fri after Ash Wednesday -> Lent 1 A
+check("2026-04-07", 2, "easter", "Ps 33:4-5, 18-22 · Acts 2:36-41 · Lk 24:13-35")   // Tue of Easter Week A
+check("2026-12-29", 2, "christmas-1", "Ps 148 · Isa 63:7-9 · Eph 1:3-14")           // Tue after Christmas 1 B
+check("2027-01-04", 2, "christmas-2", "Ps 147:12-20 · Isa 60:1-6 · Eph 1:11-14")    // Mon after Christmas 2 B
+check("2027-02-25", 2, "lent-2", "Ps 19 · Exod 19:1-9 · 1 Cor 1:1-9")               // Thu before Lent 3 B
+check("2025-06-10", 2, "pentecost", "Ps 104:24-34, 35b · Num 11:16-17, 24-30 · 1 Cor 14:1-12") // Tue after Pentecost C
+check("2025-11-06", 1, "proper-26", "Ps 145:1-5, 17-21 · Hag 1:1-15 · 2 Thess 2:13-3:5") // Thu before Proper 27 C, track 1
+check("2025-11-06", 2, "proper-26", "Ps 17:1-9 · Job 14:1-14 · 2 Thess 2:13-3:5")        // same day, track 2 -> differs
+
+console.log("daily fixtures ok")
+
 console.log("lectionary ok")
