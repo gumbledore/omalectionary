@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "id": "gumbledore.omalectionary",
+  "name": "Omalectionary",
+  "version": "0.1.0",
+  "author": "Kevin Goff",
+  "license": "MIT",
+  "description": "Today's liturgical day on the bar, tinted with the season color.",
+  "kinds": [
+    "bar-widget",
+    "overlay"
+  ],
+  "keepLoaded": true,
+  "entryPoints": {
+    "overlay": "Overlay.qml",
+    "barWidget": "BarWidget.qml"
+  },
+  "barWidget": {
+    "displayName": "Omalectionary",
+    "description": "Today's liturgical day name; click for details.",
+    "category": "Status",
+    "defaultSection": "right",
+    "allowMultiple": false
+  }
+}
