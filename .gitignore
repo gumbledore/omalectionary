@@ -1,3 +1,16 @@
 .scratch/
 *.bak
 build/sources/
+# sandbox placeholder dotfiles in this tries/ dir
+/.bash_profile
+/.bashrc
+/.gitconfig
+/.gitmodules
+/.idea
+/.mcp.json
+/.profile
+/.ripgreprc
+/.vscode
+/.zprofile
+/.zshrc
+/.claude/
