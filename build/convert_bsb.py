@@ -10,13 +10,13 @@
 # https://bereanbible.com/bsb_usfm.zip into build/sources/ (gitignored) and
 # re-run this script whenever BSB publishes an update.
 import argparse
-import json
 import sys
 import zipfile
 from pathlib import Path
 
 from books import USFM_TO_ID
 from usfm import parse_usfm
+from writer import write_table
 
 HERE = Path(__file__).resolve().parent
 DEFAULT_ZIP = HERE / "sources" / "bsb_usfm.zip"
@@ -53,12 +53,7 @@ def main():
     if missing:
         print(f"warning: {len(missing)} expected book(s) missing from output: {sorted(missing)}", file=sys.stderr)
 
-    args.out.parent.mkdir(parents=True, exist_ok=True)
-    with open(args.out, "w", encoding="utf-8") as f:
-        json.dump(table, f, ensure_ascii=False, separators=(",", ":"))
-
-    size = args.out.stat().st_size
-    print(f"wrote {args.out} ({size / 1024 / 1024:.2f} MB), {len(table)} books")
+    write_table(table, args.out, "books")
 
 
 if __name__ == "__main__":
