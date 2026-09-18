@@ -33,7 +33,9 @@ assert.equal(url("Psalm 23"), "https://ref.ly/Ps23")
 assert.equal(url("Jeremiah 8:18-9:1"), "https://ref.ly/Je8.18-9.1")
 assert.equal(url("Psalm 118:1-2, 14-24"), "https://ref.ly/Ps118.1-2")
 assert.equal(url("1 Kings 19:1-4, (5-7), 8-15a"), "https://ref.ly/1Ki19.1-4")
-assert.equal(url("Luke 2:(1-7), 8-20"), "https://ref.ly/Lk2.1-7")
+assert.equal(url("Luke 2:(1-7), 8-20"), "https://ref.ly/Lk2.8-20")
 assert.equal(url("Genesis 1:1-2:4a"), "https://ref.ly/Ge1.1-2.4")
+// All ranges optional -- falls back to the first range.
+assert.equal(url("1 Kings 19:(1-4), (5-7)"), "https://ref.ly/1Ki19.1-4")
 
 console.log("browse.test.js: all assertions passed")

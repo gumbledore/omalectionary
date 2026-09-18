@@ -57,6 +57,12 @@ Item {
   readonly property string greekFamily: root.pickFont(["SBL Greek", "Gentium Plus", "Cardo", "Libertinus Serif", "Noto Serif"])
   readonly property string hebrewFamily: root.pickFont(["SBL Hebrew", "Ezra SIL", "Taamey Frank CLM", "Noto Serif Hebrew", "Noto Sans Hebrew", "David CLM"])
 
+  // Reading body size, scaled off the shell's font base rather than pinned
+  // to Style.font.body (12px) -- a long-form reading column wants to read
+  // like a book page, not bar-widget chrome. ~19-20px at the shell's
+  // default 12px base size.
+  readonly property int readingSize: (typeof Style.fontPx === "function") ? Style.fontPx(1.6) : Math.round(Style.font.body * 1.6)
+
   property var config: ({ track: 2 })
   property var today: ({ short: "", name: "", year: "", season: "", color: "white", date: "", readings: [] })
   property var bsb: null
@@ -66,7 +72,7 @@ Item {
   // Days from today the overlay is browsing, clamped to +/-7 (Browse.js).
   // The bar widget never reads this -- it always calls Lectionary.dayFor
   // with plain `new Date()` -- so only the overlay's own view is affected.
-  // Resets to 0 whenever the overlay closes (see dismiss()/close()).
+  // Resets to 0 whenever the overlay closes (see dismiss()).
   property int dayOffset: 0
 
   // english -> original -> interlinear -> english; persisted across
@@ -78,7 +84,16 @@ Item {
     if (idx === -1) idx = 0
     idx = (idx + step + root.viewOrder.length) % root.viewOrder.length
     root.view = root.viewOrder[idx]
-    stateFile.setText(JSON.stringify({ view: root.view }))
+    root.writeState(JSON.stringify({ view: root.view }))
+  }
+
+  // Writes the state file via a single shell command that first mkdir -p's
+  // the state dir, so a first-ever run (no ~/.local/state/omalectionary yet)
+  // can't race the write against the separate startup mkdir. JSON is passed
+  // as an argument ($2), never interpolated into the shell string.
+  function writeState(json) {
+    stateWriter.command = ["sh", "-c", "mkdir -p \"$1\" && printf '%s' \"$2\" >\"$3\"", "_", root.stateDir, json, root.statePath]
+    stateWriter.running = true
   }
 
   // Single string so a later ticket (e.g. day browsing/Logos) can append
@@ -120,8 +135,6 @@ Item {
     root.opened = true
     Qt.callLater(function () { keyCatcher.forceActiveFocus() })
   }
-
-  function close() { root.opened = false; root.dayOffset = 0 }
 
   function dismiss() {
     root.opened = false
@@ -221,13 +234,16 @@ Item {
     onLoadFailed: { /* fall back to "english" */ }
   }
 
-  // mkdir -p the state directory once at startup so stateFile.setText()
-  // always has somewhere to write, even on a machine that has never run
-  // this plugin before.
+  // mkdir -p the state directory once at startup, purely so the FileView
+  // above has somewhere to watch/read on a machine that has never run this
+  // plugin before -- writes themselves go through writeState()/stateWriter,
+  // which mkdir -p's again immediately before writing.
   Process {
     command: ["mkdir", "-p", root.stateDir]
     running: true
   }
+
+  Process { id: stateWriter }
 
   IpcHandler {
     target: "gumbledore.omalectionary"
@@ -258,8 +274,9 @@ Item {
   // which is what actually puts the verse number on the right and reorders
   // Hebrew's mixed Hebrew/Latin-digit runs correctly.
   function verseHtml(v, rtl) {
+    var numSize = Math.max(1, Math.round(root.readingSize * 0.6))
     var body = escapeHtml(v.text).replace(/\n/g, "<br>")
-    var html = "<font color=\"" + root.toHex(Color.muted) + "\" size=\"2\"><sup>" + v.verse + "</sup></font>&#160;" + body
+    var html = "<sup><span style=\"color:" + root.toHex(Color.muted) + "; font-size:" + numSize + "px\">" + v.verse + "</span></sup>&#160;" + body
     return rtl ? "<div dir=\"rtl\">" + html + "</div>" : html
   }
 
@@ -287,11 +304,12 @@ Item {
 
     // A 65-character sample at the reading column's own font/size, per the
     // ticket's "compute via a TextMetrics on a 65-char string" -- this is
-    // what fixes the column's width regardless of window size.
+    // what fixes the column's width regardless of window size or font
+    // scale, and the header/tabs/footer all share it (see layout below).
     TextMetrics {
       id: columnMetrics
       font.family: root.serifFamily
-      font.pixelSize: Style.font.body
+      font.pixelSize: root.readingSize
       text: Array(66).join("n")
     }
 
@@ -335,87 +353,113 @@ Item {
       }
     }
 
-    Column {
+    // Header, tabs, reading column, and footer all share one column width
+    // (columnMetrics.width, clamped to the panel) and one horizontal
+    // center -- an Item rather than a Column so the reading Flickable can
+    // be anchored to fill the space between the (fixed) header/tabs and
+    // the (fixed) footer while everything above/below it stays put.
+    Item {
       id: layout
       anchors.fill: parent
       anchors.margins: Style.spacing.panelPadding
-      spacing: Style.spacing.lg
 
-      // -- header: full date, then "Proper 19 · Year A · Season after Pentecost" --
-      Column {
-        id: dateHeader
-        width: parent.width
-        spacing: Style.spacing.xxs
+      readonly property int columnWidth: Math.min(columnMetrics.width, width)
+      // ~6-8% of the screen height above the header, minus the panel
+      // padding this Item is already inset by, so the header doesn't hug
+      // the top edge.
+      readonly property int headerTopMargin: Math.max(0, Math.round(panel.height * 0.07) - Style.spacing.panelPadding)
 
-        Row {
-          spacing: Style.spacing.sm
-          Text {
-            text: root.today.date ? Qt.formatDate(root.parseLocalDate(root.today.date), "dddd, MMMM d, yyyy") : ""
-            color: Color.foreground
-            font.family: Style.font.family
-            font.pixelSize: Style.font.heading
-          }
-          // Only shown while browsing away from today (dayOffset != 0); the
-          // liturgical-day line below already reflects the browsed date
-          // since it reads from root.today, which refresh() rebuilds via
-          // Browse.offsetDate.
-          Text {
-            visible: root.dayOffset !== 0
-            y: (parent.height - implicitHeight) / 2
-            text: root.dayOffset > 0 ? "+" + root.dayOffset + " days" : String(root.dayOffset) + " days"
-            color: Color.muted
-            font.family: Style.font.family
-            font.pixelSize: Style.font.body
-          }
-        }
-        Text {
-          text: root.today.name + " · Year " + root.today.year + " · " + root.today.season
-          color: Color.muted
-          font.family: Style.font.family
-          font.pixelSize: Style.font.body
-        }
-      }
+      // -- header + tabs: fixed, centered, same width as the reading column --
+      Item {
+        id: headerArea
+        width: layout.columnWidth
+        height: dateHeader.height + Style.spacing.lg + tabRow.height
+        anchors.horizontalCenter: parent.horizontalCenter
+        y: layout.headerTopMargin
 
-      // -- reading tabs --
-      Row {
-        id: tabRow
-        width: parent.width
-        spacing: Style.spacing.sm
+        // -- full date, then "Proper 19 · Year A · Season after Pentecost" --
+        Column {
+          id: dateHeader
+          width: parent.width
+          spacing: Style.spacing.xs
 
-        Repeater {
-          model: root.today.readings
-          delegate: Rectangle {
-            readonly property bool active: index === root.activeIndex
-            width: tabLabel.implicitWidth + Style.spacing.controlPaddingX * 2
-            height: tabLabel.implicitHeight + Style.spacing.controlPaddingY * 2
-            radius: Style.cornerRadius
-            color: active ? Style.selectedFill : "transparent"
-            border.width: active ? Style.selectedBorderWidth : 0
-            border.color: Style.selectedBorderColor
-
+          Row {
+            spacing: Style.spacing.sm
             Text {
-              id: tabLabel
-              anchors.centerIn: parent
-              text: modelData.label
-              color: active ? Color.foreground : Color.muted
+              text: root.today.date ? Qt.formatDate(root.parseLocalDate(root.today.date), "dddd, MMMM d, yyyy") : ""
+              color: Color.foreground
+              font.family: Style.font.family
+              font.pixelSize: Style.font.display
+            }
+            // Only shown while browsing away from today (dayOffset != 0); the
+            // liturgical-day line below already reflects the browsed date
+            // since it reads from root.today, which refresh() rebuilds via
+            // Browse.offsetDate.
+            Text {
+              visible: root.dayOffset !== 0
+              y: (parent.height - implicitHeight) / 2
+              text: root.dayOffset > 0 ? "+" + root.dayOffset + " days" : String(root.dayOffset) + " days"
+              color: Color.muted
               font.family: Style.font.family
               font.pixelSize: Style.font.body
             }
+          }
+          Text {
+            text: root.today.name + " · Year " + root.today.year + " · " + root.today.season
+            color: Color.muted
+            font.family: Style.font.family
+            font.pixelSize: Style.font.heading
+          }
+        }
 
-            MouseArea {
-              anchors.fill: parent
-              cursorShape: Qt.PointingHandCursor
-              onClicked: root.selectReading(index)
+        // -- reading tabs, left-aligned within the column --
+        Row {
+          id: tabRow
+          anchors.top: dateHeader.bottom
+          anchors.topMargin: Style.spacing.lg
+          width: parent.width
+          spacing: Style.spacing.sm
+
+          Repeater {
+            model: root.today.readings
+            delegate: Rectangle {
+              readonly property bool active: index === root.activeIndex
+              width: tabLabel.implicitWidth + Style.spacing.controlPaddingX * 2
+              height: tabLabel.implicitHeight + Style.spacing.controlPaddingY * 2
+              radius: Style.cornerRadius
+              color: active ? Style.selectedFill : "transparent"
+              border.width: active ? Style.selectedBorderWidth : 0
+              border.color: Style.selectedBorderColor
+
+              Text {
+                id: tabLabel
+                anchors.centerIn: parent
+                text: modelData.label
+                color: active ? Color.foreground : Color.muted
+                font.family: Style.font.family
+                font.pixelSize: Style.font.body
+              }
+
+              MouseArea {
+                anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
+                onClicked: root.selectReading(index)
+              }
             }
           }
         }
       }
 
-      // -- the reading itself: centered, ~65 characters wide, scrolls --
+      // -- the reading itself: centered, ~65 characters wide, scrolls,
+      // fixed between the header/tabs above and the footer below --
       Flickable {
         id: readingFlick
-        width: parent.width
-        height: parent.height - layout.spacing * 3 - dateHeader.height - tabRow.height - footerRow.height
+        anchors.top: headerArea.bottom
+        anchors.topMargin: Style.spacing.huge
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: footerRow.top
+        anchors.bottomMargin: Style.spacing.lg
         contentWidth: width
         contentHeight: readingColumn.height
         clip: true
@@ -424,8 +468,11 @@ Item {
         Column {
           id: readingColumn
           x: Math.max(0, (readingFlick.width - width) / 2)
-          width: Math.min(columnMetrics.width, readingFlick.width)
-          spacing: Style.spacing.lg
+          width: layout.columnWidth
+          // Prose verses read as paragraphs rather than a tightly listed
+          // stack; poetry line breaks already come from newlines within
+          // each verse's own text.
+          spacing: Math.round(root.readingSize * 0.35)
 
           // -- english --
           Repeater {
@@ -438,8 +485,8 @@ Item {
               color: Color.foreground
               opacity: modelData.optional ? 0.6 : 1.0
               font.family: root.serifFamily
-              font.pixelSize: Style.font.body
-              lineHeight: 1.5
+              font.pixelSize: root.readingSize
+              lineHeight: 1.55
               lineHeightMode: Text.ProportionalHeight
             }
           }
@@ -456,7 +503,7 @@ Item {
               color: Color.foreground
               opacity: modelData.optional ? 0.6 : 1.0
               font.family: rtl ? root.hebrewFamily : root.greekFamily
-              font.pixelSize: Style.font.body
+              font.pixelSize: root.readingSize
               horizontalAlignment: rtl ? Text.AlignRight : Text.AlignLeft
               lineHeight: 1.6
               lineHeightMode: Text.ProportionalHeight
@@ -478,8 +525,8 @@ Item {
                 color: Color.foreground
                 opacity: modelData.optional ? 0.6 : 1.0
                 font.family: root.serifFamily
-                font.pixelSize: Style.font.body
-                lineHeight: 1.5
+                font.pixelSize: root.readingSize
+                lineHeight: 1.55
                 lineHeightMode: Text.ProportionalHeight
               }
 
@@ -492,11 +539,11 @@ Item {
                 color: Color.muted
                 opacity: modelData.optional ? 0.45 : 0.7
                 font.family: rtl ? root.hebrewFamily : root.greekFamily
-                font.pixelSize: Style.font.body
+                font.pixelSize: root.readingSize
                 horizontalAlignment: rtl ? Text.AlignRight : Text.AlignLeft
                 leftPadding: rtl ? 0 : Style.spacing.sm
                 rightPadding: rtl ? Style.spacing.sm : 0
-                lineHeight: 1.5
+                lineHeight: 1.55
                 lineHeightMode: Text.ProportionalHeight
               }
             }
@@ -508,7 +555,7 @@ Item {
             text: "No text available for this reading."
             color: Color.muted
             font.family: root.serifFamily
-            font.pixelSize: Style.font.body
+            font.pixelSize: root.readingSize
           }
         }
       }
@@ -516,7 +563,9 @@ Item {
       // -- footer: current version(s) on the left, key hints on the right --
       Row {
         id: footerRow
-        width: parent.width
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
 
         Text {
           id: footerLeft

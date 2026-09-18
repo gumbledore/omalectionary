@@ -1,5 +1,5 @@
 #!/bin/bash
-# Pass/fail harness for the Omalectionary calendar module.
+# Pass/fail harness for the Omalectionary plugin's full test suite.
 set -uo pipefail
 
 here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)

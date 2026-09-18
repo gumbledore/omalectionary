@@ -59,14 +59,21 @@ var LOGOS_ABBR = {
 }
 
 // Builds a ref.ly URL (no version suffix, so Logos uses the user's
-// preferred Bible) from a reading's book and FIRST range only. Range shapes
-// per Reference.js/Text.js: whole chapter {whole, chapter}; single-chapter
-// verse span {chapter, start, end[, optional, startPart, endPart]};
-// chapter-spanning {chapter, start, endChapter, end}. Part suffixes (a/b)
-// are dropped; ref.ly wants plain chapter/verse numbers only.
+// preferred Bible) from a reading's book and one range: the first
+// non-optional range if any, else the first range (so a reading like
+// "Luke 2:(1-7), 8-20" links to the required 8-20, not the bracketed
+// optional opener). Range shapes per Reference.js/Text.js: whole chapter
+// {whole, chapter}; single-chapter verse span {chapter, start, end[,
+// optional, startPart, endPart]}; chapter-spanning {chapter, start,
+// endChapter, end}. Part suffixes (a/b) are dropped; ref.ly wants plain
+// chapter/verse numbers only.
 function logosUrl(reading) {
   var abbr = LOGOS_ABBR[reading.book] || reading.book
-  var r = reading.ranges[0]
+  var ranges = reading.ranges
+  var r = ranges[0]
+  for (var i = 0; i < ranges.length; i++) {
+    if (!ranges[i].optional) { r = ranges[i]; break }
+  }
   var loc
   if (r.whole) {
     loc = String(r.chapter)
