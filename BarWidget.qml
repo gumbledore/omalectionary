@@ -6,6 +6,7 @@ import qs.Ui
 import "Calendar.js" as Calendar
 import "Reference.js" as Reference
 import "data/sundays.js" as SundaysData
+import "data/daily.js" as DailyData
 import "Lectionary.js" as Lectionary
 import "Config.js" as Config
 
@@ -21,6 +22,7 @@ BarWidget {
 
   readonly property string homePath: Quickshell.env("HOME")
   readonly property string configPath: (Quickshell.env("XDG_CONFIG_HOME") || (homePath + "/.config")) + "/omalectionary/config.json"
+  readonly property string pluginDir: Qt.resolvedUrl(".").toString().replace(/^file:\/\//, "").replace(/\/$/, "")
 
   property var config: ({ track: 2 })
   property var today: ({ short: "", name: "", year: "", season: "", color: "white", date: "", readings: [] })
@@ -30,7 +32,9 @@ BarWidget {
     // Idempotent and cheap — called here (rather than once in
     // Component.onCompleted) so a refresh triggered by the async FileView
     // load can never race ahead of the wiring.
-    Lectionary.configure(Calendar, Reference, SundaysData.SUNDAYS)
+    // 4th arg (the RCL Daily Lectionary table) is ticket 04's addition to
+    // Lectionary.configure -- required on every weekday, not just Sundays.
+    Lectionary.configure(Calendar, Reference, SundaysData.SUNDAYS, DailyData.DAILY)
     root.today = Lectionary.dayFor(new Date(), root.config)
   }
 
@@ -105,6 +109,6 @@ BarWidget {
     foreground: root.tint
     useActiveColor: false
     tooltipText: root.today.name + " · Year " + root.today.year + "\n" + root.readingsLine()
-    // Click is a no-op for now; the overlay entry point is a placeholder.
+    onPressed: Quickshell.execDetached([root.pluginDir + "/bin/omalectionary", "show-overlay"])
   }
 }

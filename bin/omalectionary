@@ -1,0 +1,33 @@
+#!/bin/bash
+# omalectionary - CLI entry point for the Omalectionary plugin.
+#
+# show-overlay: toggle the reading overlay through the shell's IPC, the same
+# way gumbledore.reminders' `rem show-overlay` reaches its own overlay (see
+# ~/.config/omarchy/plugins/gumbledore.reminders/bin/rem). Meant to be bound
+# to a Hyprland keybinding as well as the bar widget's click handler.
+#
+# open-logos <ref>: reserved for ticket 06 (jumping straight to a reference
+# via Logos); not implemented yet.
+set -euo pipefail
+
+PLUGIN_ID="gumbledore.omalectionary"
+
+usage() {
+  cat <<EOF
+Usage:
+  omalectionary show-overlay   toggle the reading overlay
+EOF
+}
+
+case "${1:-}" in
+show-overlay)
+  omarchy-shell -q "$PLUGIN_ID" toggle
+  ;;
+-h | --help | help | "")
+  usage
+  ;;
+*)
+  usage
+  exit 1
+  ;;
+esac

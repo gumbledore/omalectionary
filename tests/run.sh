@@ -24,5 +24,13 @@ else
 fi
 
 echo
+echo "text"
+if command -v node >/dev/null; then
+  if node "$here/text.test.js"; then ok "text.test.js"; else bad "text.test.js"; fi
+else
+  bad "node not found"
+fi
+
+echo
 echo "$pass passed, $fail failed"
 ((fail == 0))
