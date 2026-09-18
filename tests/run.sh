@@ -16,5 +16,13 @@ else
 fi
 
 echo
+echo "lectionary"
+if command -v node >/dev/null; then
+  if node "$here/lectionary.test.js"; then ok "lectionary.test.js"; else bad "lectionary.test.js"; fi
+else
+  bad "node not found"
+fi
+
+echo
 echo "$pass passed, $fail failed"
 ((fail == 0))

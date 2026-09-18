@@ -1,21 +1,52 @@
 import QtQuick
+import Quickshell
+import Quickshell.Io
 import qs.Commons
 import qs.Ui
 import "Calendar.js" as Calendar
+import "Reference.js" as Reference
+import "data/sundays.js" as SundaysData
+import "Lectionary.js" as Lectionary
+import "Config.js" as Config
 
-// Today's liturgical day name on the bar, tinted by season. All the
-// computation lives in Calendar.js (pure JS, also importable by node for
-// tests); this widget just renders what it returns and recomputes at
-// midnight. No lectionary readings yet — that's a later ticket.
+// Today's liturgical day name on the bar, tinted by season, with the
+// appointed readings (Sunday/feast set; coming Sunday's on a weekday) in the
+// tooltip. Calendar.js/Reference.js/Lectionary.js/Config.js are plain JS,
+// also importable by node for tests — this widget just wires the sibling JS
+// files together (see Lectionary.js's header comment for why that wiring
+// happens here instead of via require()) and renders the result.
 BarWidget {
   id: root
   moduleName: "gumbledore.omalectionary"
 
-  property var today: Calendar.dayFor(new Date())
+  readonly property string homePath: Quickshell.env("HOME")
+  readonly property string configPath: (Quickshell.env("XDG_CONFIG_HOME") || (homePath + "/.config")) + "/omalectionary/config.json"
+
+  property var config: ({ track: 2 })
+  property var today: ({ short: "", name: "", year: "", season: "", color: "white", date: "", readings: [] })
   readonly property string dateKey: today.date
 
   function refresh() {
-    root.today = Calendar.dayFor(new Date())
+    // Idempotent and cheap — called here (rather than once in
+    // Component.onCompleted) so a refresh triggered by the async FileView
+    // load can never race ahead of the wiring.
+    Lectionary.configure(Calendar, Reference, SundaysData.SUNDAYS)
+    root.today = Lectionary.dayFor(new Date(), root.config)
+  }
+
+  Component.onCompleted: {
+    root.refresh()
+    root.scheduleMidnight()
+  }
+
+  FileView {
+    id: configFile
+    path: root.configPath
+    printErrors: false
+    watchChanges: true
+    onLoaded: { root.config = Config.parseConfig(text()); root.refresh() }
+    onLoadFailed: { root.config = Config.parseConfig(""); root.refresh() }
+    onFileChanged: reload()
   }
 
   // The shell's Color singleton only exposes five roles (foreground,
@@ -33,6 +64,10 @@ BarWidget {
   }
 
   readonly property color tint: seasonColor(today.color)
+
+  function readingsLine() {
+    return root.today.readings.map(function (r) { return r.label }).join(" · ")
+  }
 
   implicitWidth: button.implicitWidth
   implicitHeight: button.implicitHeight
@@ -63,18 +98,13 @@ BarWidget {
     }
   }
 
-  Component.onCompleted: {
-    root.refresh()
-    root.scheduleMidnight()
-  }
-
   WidgetButton {
     id: button
     bar: root.bar
     text: root.today.short
     foreground: root.tint
     useActiveColor: false
-    tooltipText: root.today.name + " · Year " + root.today.year + " · " + root.today.season
+    tooltipText: root.today.name + " · Year " + root.today.year + "\n" + root.readingsLine()
     // Click is a no-op for now; the overlay entry point is a placeholder.
   }
 }
