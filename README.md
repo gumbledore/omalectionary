@@ -84,16 +84,20 @@ neighboring Sunday/feast it belongs to: Monday-Wednesday respond to the
 is a documented exception with its own Monday-Saturday octave). See
 `Lectionary.js`'s header comments for the exact resolution rules.
 
-**A candid note on accuracy:** the Sunday table (`data/sundays.js`) and
-Daily Lectionary table (`data/daily.js`) were transcribed by hand from
-published RCL references and have only been partly spot-checked against
-Vanderbilt Divinity Library's lectionary pages
-(https://lectionary.library.vanderbilt.edu/). Treat any single reference as
-worth double-checking before relying on it publicly. If you find one wrong,
-it's a one-line fix: find the day's key (e.g. `"proper-19"`, `"easter"`) and
-year/slot in `data/sundays.js` (Sundays/feasts) or `data/daily.js` (weekdays,
-keyed by the governing Sunday/feast plus `mon`/`tue`/`wed`/`thu`/`fri`/`sat`),
-and edit the reference string in place.
+**A candid note on accuracy:** the Sunday/feast table (`data/sundays.js`) has
+been verified against Vanderbilt Divinity Library's RCL CSV exports
+(https://lectionary.library.vanderbilt.edu/) for the three calendar years
+covered by the Year A/B/C 2025-28 exports, via `build/verify_sundays.py`; see
+that file's header comment for the handful of day keys those three exports
+don't reach (Epiphany 8/9 and similar) and which remain unverified. The Daily
+Lectionary table (`data/daily.js`) was transcribed by hand from published RCL
+references and has only been partly spot-checked against Vanderbilt. Treat
+any single daily reference as worth double-checking before relying on it
+publicly. If you find one wrong, it's a one-line fix: find the day's key
+(e.g. `"proper-19"`, `"easter"`) and year/slot in `data/sundays.js`
+(Sundays/feasts) or `data/daily.js` (weekdays, keyed by the governing
+Sunday/feast plus `mon`/`tue`/`wed`/`thu`/`fri`/`sat`), and edit the
+reference string in place.
 
 ## Texts and licenses
 

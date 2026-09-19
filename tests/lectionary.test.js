@@ -124,7 +124,7 @@ check("2024-12-01", 2, "advent-1", "Jer 33:14-16 · Ps 25:1-10 · 1 Thess 3:9-13
 check("2025-04-20", 2, "easter", "Acts 10:34-43 · Ps 118:1-2, 14-24 · 1 Cor 15:19-26 · Jn 20:1-18")
 check("2025-09-21", 1, "proper-20", "Jer 8:18-9:1 · Ps 79:1-9 · 1 Tim 2:1-7 · Lk 16:1-13")
 check("2025-09-21", 2, "proper-20", "Amos 8:4-7 · Ps 113 · 1 Tim 2:1-7 · Lk 16:1-13")
-check("2024-11-01", 2, "all-saints", "Isa 25:6-9 · Ps 24 · Rev 21:1-6a · Jn 11:32-44")
+check("2024-11-01", 2, "all-saints", "Wis 3:1-9 · Ps 24 · Rev 21:1-6a · Jn 11:32-44")
 
 console.log("fixtures ok")
 
