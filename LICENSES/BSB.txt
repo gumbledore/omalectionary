@@ -1,0 +1,49 @@
+Berean Standard Bible (BSB) -- Public Domain
+=============================================
+
+Used in data/bsb.json, built by build/convert_bsb.py from the USFM
+distribution at https://bereanbible.com/bsb_usfm.zip.
+
+Source: https://berean.bible/terms.htm (fetched 2026-09-18), quoted verbatim
+below.
+
+-----------------------------------------------------------------------------
+
+Terms and Conditions
+April 30, 2023
+
+Terms and Conditions:
+The Berean Bible and Majority Bible texts are officially dedicated to the
+public domain as of April 30, 2023. All uses are freely permitted.
+
+Attribution Notice (appreciated but not required):
+The Holy Bible, Berean Standard Bible, BSB is produced in cooperation with
+Bible Hub, Discovery Bible, OpenBible.com, and the Berean Bible Translation
+Committee. This text of God's Word has been dedicated to the public domain.
+
+Linking (appreciated but not required):
+//berean.bible - Berean Bible Homepage
+//interlinearbible.com - Berean Interlinear Bible
+//literalbible.com - Berean Literal Bible
+//bereanbible.com - Berean Standard Bible
+//majoritybible.com - Majority Standard Bible
+
+Derivatives and Adaptations
+By definition all public domain materials may be freely reproduced,
+integrated, and adapted for both free and commercial resources.
+
+All applications that maintain the verbatim text from the above Berean sites
+are invited to bear the Berean name. For example, apps, audio, video, print
+reproductions, and commentaries with cited verses are all encouraged to use
+and cite the official text.
+
+For derivative works that vary from the official text, we respectfully
+request that the Berean name is not used. We request the help of the open
+source community in maintaining an official text.
+
+-----------------------------------------------------------------------------
+
+Note: bereanbible.com's own page footer separately carries a conventional
+"Copyright (c) 2021 Berean Standard Bible. All rights reserved." notice,
+which predates and is superseded by the April 30, 2023 public domain
+dedication quoted above.

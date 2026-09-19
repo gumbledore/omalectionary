@@ -1,0 +1,40 @@
+SBL Greek New Testament (SBLGNT) -- CC BY 4.0
+================================================
+
+Used in data/sblgnt.json, built by build/convert_sblgnt.py from
+https://github.com/LogosBible/SBLGNT (data/sblgnt/text/*.txt).
+
+Copyright 2010 by the Society of Biblical Literature (https://sbl-site.org/)
+and Logos Bible Software (https://www.logos.com/).
+
+Licensed under a Creative Commons Attribution 4.0 International License:
+https://creativecommons.org/licenses/by/4.0/
+
+Attribution line (also in this repo's README.md; the overlay's footer shows
+only the active version's short name, not this full line):
+
+  Scripture quotations marked SBLGNT are from the SBL Greek New Testament.
+  Copyright (c) 2010 Society of Biblical Literature and Logos Bible Software.
+
+Source repository terms, quoted verbatim from
+https://github.com/LogosBible/SBLGNT/blob/master/README.md:
+
+-----------------------------------------------------------------------------
+
+## License
+
+The SBLGNT is licensed under a Creative Commons Attribution 4.0 International
+License (https://creativecommons.org/licenses/by/4.0/).
+
+Copyright 2010 by the Society of Biblical Literature (https://sbl-site.org/)
+and Logos Bible Software (https://www.logos.com/).
+
+-----------------------------------------------------------------------------
+
+The full CC BY 4.0 legal text (from the same repository's LICENSE file) is
+long-form boilerplate and is not reproduced here in full; see
+https://creativecommons.org/licenses/by/4.0/legalcode for the canonical text.
+The critical-apparatus sigla present in the plain-text distribution
+(substitution markers, brackets around textually disputed passages) are
+stripped at build time by build/convert_sblgnt.py -- see that file's header
+comment.
