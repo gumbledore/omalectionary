@@ -54,6 +54,10 @@ assert.equal(Reference.formatLabel(Reference.parseRef("Luke 16:1-13")), "Lk 16:1
 assert.equal(Reference.formatLabel(Reference.parseRef("1 Kings 19:1-4, (5-7), 8-15a")), "1 Kgs 19:1-4, (5-7), 8-15a")
 assert.equal(Reference.formatLabel(Reference.parseRef("Luke 2:(1-7), 8-20")), "Lk 2:(1-7), 8-20")
 assert.equal(Reference.formatLabel(Reference.parseRef("Psalm 23")), "Ps 23")
+assert.equal(Reference.formatLabel(Reference.parseRef("Psalm 42,43")), "Ps 42, 43") // proper-7 C track 1
+assert.equal(Reference.formatLabel(Reference.parseRef("Psalm 42 and 43")), "Ps 42, 43")
+assert.deepEqual(Reference.parseRef("Philemon 1-25"),
+  { book: "Phlm", ranges: [{ chapter: 1, start: 1, end: 25 }] })
 
 // The four gospels abbreviate to two letters; Matthew/Mark included per spec.
 assert.equal(Reference.abbreviate("Matt"), "Mt")
@@ -194,22 +198,22 @@ assert.equal(Lectionary.dayFor("2026-09-18", { track: 2 }).source, "daily", "Fri
 console.log("daily source flags ok")
 
 // --- Fixture weekdays spread across seasons and all three year letters ---
-// (checked against the transcribed data/daily.js table; track split shown
+// (verified against Vanderbilt daily readings pages; track split shown
 // where it diverges)
 
-check("2026-09-18", 1, "proper-19", "Ps 105:1-6, 37-45 · Exod 16:1-8 · Rom 15:1-6") // Fri before Proper 20 A, track 1
-check("2026-09-18", 2, "proper-19", "Ps 145:1-8 · Jonah 3:6-10 · Rom 15:1-6")       // same day, track 2 -> differs
-check("2026-09-22", 1, "proper-20", "Ps 27:1-6 · Exod 16:31-36 · Phil 1:12-18a")    // Tue after Proper 20 A, track 1
-check("2026-09-22", 2, "proper-20", "Ps 27:1-6 · Mic 1:1-9 · Phil 1:12-18a")        // same day, track 2 -> differs
-check("2025-12-04", 2, "advent-1", "Ps 72:1-7, 18-19 · Isa 9:8-17 · 2 Pet 3:1-10")  // Thu before Advent 2 A
-check("2026-02-20", 2, "ash-wednesday", "Ps 32 · Deut 8:11-20 · Heb 4:1-16")        // Fri after Ash Wednesday -> Lent 1 A
-check("2026-04-07", 2, "easter", "Ps 33:4-5, 18-22 · Acts 2:36-41 · Lk 24:13-35")   // Tue of Easter Week A
-check("2026-12-29", 2, "christmas-1", "Ps 148 · Isa 63:7-9 · Eph 1:3-14")           // Tue after Christmas 1 B
-check("2027-01-04", 2, "christmas-2", "Ps 147:12-20 · Isa 60:1-6 · Eph 1:11-14")    // Mon after Christmas 2 B
-check("2027-02-25", 2, "lent-2", "Ps 19 · Exod 19:1-9 · 1 Cor 1:1-9")               // Thu before Lent 3 B
-check("2025-06-10", 2, "pentecost", "Ps 104:24-34, 35b · Num 11:16-17, 24-30 · 1 Cor 14:1-12") // Tue after Pentecost C
-check("2025-11-06", 1, "proper-26", "Ps 145:1-5, 17-21 · Hag 1:1-15 · 2 Thess 2:13-3:5") // Thu before Proper 27 C, track 1
-check("2025-11-06", 2, "proper-26", "Ps 17:1-9 · Job 14:1-14 · 2 Thess 2:13-3:5")        // same day, track 2 -> differs
+check("2026-09-18", 1, "proper-19", "Ps 105:1-6, 37-45 · Exod 16:1-21 · 2 Cor 13:5-10") // Fri before Proper 20 A, track 1
+check("2026-09-18", 2, "proper-19", "Ps 145:1-8 · Nah 2:3-13 · 2 Cor 13:5-10")       // same day, track 2 -> differs
+check("2026-09-22", 1, "proper-20", "Ps 119:97-104 · Num 11:1-9 · Rom 16:17-20")    // Tue after Proper 20 A, track 1
+check("2026-09-22", 2, "proper-20", "Ps 106:1-12 · Gen 28:10-17 · Rom 16:17-20")        // same day, track 2 -> differs
+check("2025-12-04", 2, "advent-1", "Ps 72:1-7, 18-19 · Isa 4:2-6 · Acts 1:12-17, 21-26")  // Thu before Advent 2 A
+check("2026-02-20", 2, "ash-wednesday", "Ps 51 · Jonah 4:1-11 · Rom 1:8-17")        // Fri after Ash Wednesday -> Lent 1 A
+check("2026-04-07", 2, "easter", "Ps 118:1-2, 14-24 · Exod 15:1-18 · Col 3:12-17")   // Tue of Easter Week A
+check("2026-12-29", 2, "christmas-1", "Ps 148 · Mt 12:46-50 · Isa 49:5-15")           // Tue after Christmas 1 B
+check("2027-01-04", 2, "christmas-2", "Ps 110 · Prov 3:1-12 · Jas 4:11-17")    // Mon after Christmas 2 B
+check("2027-02-25", 2, "lent-2", "Ps 19 · Exod 19:1-9a · 1 Pet 2:4-10")               // Thu before Lent 3 B
+check("2025-06-10", 2, "pentecost", "Ps 48 · Ezek 11:14-25 · 1 Cor 2:12-16") // Tue after Pentecost C
+check("2025-11-06", 1, "proper-26", "Ps 145:1-5, 17-21 · Zech 1:1-17 · Acts 22:22-23:11") // Thu before Proper 27 C, track 1
+check("2025-11-06", 2, "proper-26", "Ps 17:1-9 · Deut 25:5-10 · Acts 22:22-23:11")        // same day, track 2 -> differs
 
 console.log("daily fixtures ok")
 

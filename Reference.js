@@ -182,8 +182,15 @@ function parseRef(ref) {
 
   var colon = rest.indexOf(":")
   if (colon === -1) {
-    // Whole chapter, e.g. "Psalm 23".
-    return { book: book, ranges: [{ chapter: Number(rest), whole: true }] }
+    // No chapter:verse split. Either whole chapter(s) ("Psalm 23",
+    // "Psalm 42,43", "Psalm 42 and 43") or a verse span in a single-chapter
+    // book ("Philemon 1-25", "Jude 17-25"), read as chapter 1.
+    var ranges0 = rest.split(/,|\band\b/).map(function (tok) {
+      tok = tok.trim()
+      if (/^\d+$/.test(tok)) return { chapter: Number(tok), whole: true }
+      return parseSegment(tok, 1)
+    })
+    return { book: book, ranges: ranges0 }
   }
 
   var chapter = Number(rest.slice(0, colon))

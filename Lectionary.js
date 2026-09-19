@@ -217,5 +217,5 @@ function dayFor(date, config) {
 }
 
 if (typeof module !== "undefined") {
-  module.exports = { dayFor: dayFor, configure: configure }
+  module.exports = { dayFor: dayFor, configure: configure, resolveDailySlot: resolveDailySlot }
 }

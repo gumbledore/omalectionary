@@ -90,10 +90,12 @@ been verified against Vanderbilt Divinity Library's RCL CSV exports
 covered by the Year A/B/C 2025-28 exports, via `build/verify_sundays.py`; see
 that file's header comment for the handful of day keys those three exports
 don't reach (Epiphany 8/9 and similar) and which remain unverified. The Daily
-Lectionary table (`data/daily.js`) was transcribed by hand from published RCL
-references and has only been partly spot-checked against Vanderbilt. Treat
-any single daily reference as worth double-checking before relying on it
-publicly. If you find one wrong, it's a one-line fix: find the day's key
+Lectionary table (`data/daily.js`) has likewise been regenerated from
+Vanderbilt's daily-readings pages for the same three years via
+`build/verify_daily.py`; weekday slots those years never reach (about 169)
+are still hand-transcribed and unverified, and five garbled source lines
+were skipped (listed in that script's header). Treat any reference outside
+the 2025-28 window as worth double-checking before relying on it publicly. If you find one wrong, it's a one-line fix: find the day's key
 (e.g. `"proper-19"`, `"easter"`) and year/slot in `data/sundays.js`
 (Sundays/feasts) or `data/daily.js` (weekdays, keyed by the governing
 Sunday/feast plus `mon`/`tue`/`wed`/`thu`/`fri`/`sat`), and edit the
